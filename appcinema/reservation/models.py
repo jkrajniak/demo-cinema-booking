@@ -25,3 +25,7 @@ class Reservation(models.Model):
     screening = models.ForeignKey(Screening)
     reservation_start = models.DateTimeField(auto_now_add=True)
     confirmed = models.BooleanField()
+    
+class SeatReserved(models.Model):
+    seat = models.ForeignKey(Seat)
+    reservation = models.ForeignKey(Reservation)
