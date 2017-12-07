@@ -19,8 +19,11 @@ def index(request):
 
 def get_screening(request, screening_id):
     """Returns information about screening."""
+    # TODO(jakub): perhaps this view could be replaced by REST API
     screening = models.Screening.objects.select_related('auditorium').select_related('movie').get(pk=screening_id)
-    blocked_seats = models.Reservation.objects.filter(screening=screening_id).values('start_seat_block', 'seat_block_size')
+    blocked_seats = models.Reservation.objects.filter(
+        screening=screening_id
+    ).exclude(status=models.Reservation.CANCELED).values('start_seat_block', 'seat_block_size')
 
     data = {
         'id': screening.id,
@@ -34,24 +37,23 @@ def get_screening(request, screening_id):
     }
     return JsonResponse(data)
 
-def reserve_seats(request, screening_id):
-    """Set sets a being tentative reserved. """
-    pusher_client = pusher.Pusher(
-        app_id='441251',
-        key=settings.PUSHER_KEY,
-        secret=settings.PUSHER_SECRET,
-        cluster='eu',
-        ssl=True)
-    pusher_client.trigger('appcinema-reservation', 'seats-selected', {'message': 'hello world'})
-
-    return JsonResponse({'status': 'OK'})
-
-class ScreeningViewSet(viewsets.ModelViewSet):
-    """API endpoint for the screening."""
-    # queryset = models.Screening.objects.filter(start_screening__gte=datetime.date.today())
-    queryset = models.Screening.objects.all()
-    serializer_class = serializer.ScreeningSerializer
-
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = models.Reservation.objects.all()
     serializer_class = serializer.ReservationSerializer
+
+    def perform_create(self, serializer):
+        return super(ReservationViewSet, self).perform_create(serializer)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        # Gets the blocked seats. Do we really need to send everytime all blocked seats?
+        blocked_seats = models.Reservation.objects.filter(
+            screening=serializer.validated_data.get('screening')
+        ).exclude(status=models.Reservation.CANCELED).values('start_seat_block', 'seat_block_size')
+        pusher_client = pusher.Pusher(
+            app_id='441251',
+            key=settings.PUSHER_KEY,
+            secret=settings.PUSHER_SECRET,
+            cluster='eu',
+            ssl=True)
+        pusher_client.trigger('appcinema-reservation', 'blocked-seats', {'blocked_seats': list(blocked_seats)})

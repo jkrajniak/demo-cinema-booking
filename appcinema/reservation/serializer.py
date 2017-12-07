@@ -25,10 +25,15 @@ class ReservationSerializer(serializers.ModelSerializer):
             auditorium = screening.auditorium
             if start_seat_number + seat_block_size > auditorium.total_num_seats:
                 raise serializers.ValidationError('Wrong position of the seats block')
+
+        # Validate the session time.
+
+
         return data
+
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = models.Reservation
-        fields = ('id', 'user', 'screening', 'reservation_start',
-                  'confirmed', 'start_seat_block', 'seat_block_size')
+        fields = ('id', 'user', 'screening', 'reservation_start', 'reservation_confirmed',
+                  'status', 'start_seat_block', 'seat_block_size')

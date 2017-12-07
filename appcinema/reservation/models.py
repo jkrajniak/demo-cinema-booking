@@ -23,9 +23,18 @@ class Screening(models.Model):
     start_screening = models.DateTimeField()
     
 class Reservation(models.Model):
+    CANCELED, TENTATIVE, CONFIRMED, BOOKED = range(-1, 3)
+    STATUS = (
+        (CANCELED, "Canceled"),
+        (TENTATIVE, "Tentative booked"),
+        (CONFIRMED, "Confirmed"),
+        (BOOKED, "Booked")
+    )
+    
     user = models.ForeignKey(User)
     screening = models.ForeignKey(Screening)
+    status = models.IntegerField(choices=STATUS, default=CANCELED)
     reservation_start = models.DateTimeField(auto_now_add=True)
-    confirmed = models.BooleanField(default=False)
+    reservation_confirmed = models.DateTimeField(blank=True, null=True)
     start_seat_block = models.IntegerField(default=0)
-    seat_block_size = models.IntegerField(default=0)
+    seat_block_size = models.IntegerField(default=0)    

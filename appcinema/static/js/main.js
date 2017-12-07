@@ -1,60 +1,129 @@
 'use strict';
 
+var myTools = {
+    /**
+     * Set timer.
+     * @param duration Duration in seconds.
+     * @param display jQuery element to update.
+     * @param onFinish callback function to call after finished.
+     */
+    setTimer: function (duration, display, onFinish) {
+        var start = Date.now();
+        var interval = null;
+
+        function timer() {
+            var diff = duration - (((Date.now() - start) / 1000) | 0);
+            var minutes = (diff / 60) | 0;
+            var seconds = (diff % 60) | 0;
+
+            // Finished
+            if (minutes === 0 && seconds === 0) {
+                clearInterval(interval);
+                onFinish();
+            }
+
+            // padding with zeros
+            if (minutes < 10)
+                minutes = "0" + minutes;
+            if (seconds < 10)
+                seconds = "0" + seconds;
+
+            display.text(minutes + ":" + seconds);
+            if (diff <= 0)
+                start = Date.now() + 1000;
+        };
+        timer();
+        interval = setInterval(timer, 1000)
+    }
+};
+
 var myApplication = {
-    selectNumSeats: function () {
-        $("#step3").show();
-        $("#num-seats").text($(this).val());
-        myApplication.selectedNumSeats = parseInt($(this).val());
-        return true;
+    reserveSeats: function (seatId) {
+        var valid = true;
+        // Check if the seats that we would like to reserve are not blocked already
+        for (var s = seatId; (s < seatId + myApplication.selectedNumSeats) && valid; s++) {
+            valid = valid && !myApplication.blockedSeatsList.has(s);
+        }
+        if (!valid)
+            return false;
+
+        // Seat block should be continuous in a single row.
+        var row1 = Math.floor(seatId / myApplication.auditorium.cols);
+        var row2 = Math.floor((seatId + myApplication.selectedNumSeats - 1) / myApplication.auditorium.cols);
+        if (row1 != row2)
+            return false;
+
+        // Update local storage with selected seats.
+        myApplication.selectedSeatsList.clear();
+        for (var s = seatId; (s < seatId + myApplication.selectedNumSeats) && valid; s++) {
+            myApplication.selectedSeatsList.add(s);
+        }
+
+        // Update the reservation with new values of seats.
+        var params = {
+            id: myApplication.currentReservationId,
+            start_seat_block: seatId,
+            seat_block_size: myApplication.selectedNumSeats,
+            screening: myApplication.screening_id
+        };
+        // we have reservation block, only update it
+        var action = ["reservation", "update"];
+        myApplication.client.action(schema, action, params).then(function () {
+            $("td.seats").removeClass("clicked");  // clear all selected cells.
+            for (var s = seatId; s < seatId + myApplication.selectedNumSeats; s++) {
+                $("td#seat-" + s).addClass("clicked");
+            }
+        }).catch(function (error) {
+            console.log(error);
+            //TODO(jakub): report or do something, should not happen.
+        });
     },
 
     selectSeats: function () {
         var seatId = parseInt($(this).attr("data-seat-num"));
         if (seatId + myApplication.selectedNumSeats <= myApplication.auditorium.total_num_seats) {
             if (myApplication.currentReservationId == null) {
-                // TODO(jakub): report error, something went wrong.
+                // reservation not made, do it first time and start the clock
+                var action = ["reservation", "create"];
+                var params = {screening: myApplication.screening_id, status: 0};
+                myApplication.client.action(schema, action, params).then(function (result) {
+                    myApplication.currentReservationId = result.id;
+                    myTools.setTimer(2*60, $("span#timer"), function () {
+                        // Cancel reservation when timer finished.
+                        var action = ["reservation", "update"];
+                        var params = {
+                            id: myApplication.currentReservationId,
+                            screening: myApplication.screening_id,
+                            status: -1
+                        };
+                        myApplication.client.action(schema, action, params).then(function (result) {
+                            alert("Session expired. Reload");
+                            myApplication.init();
+                        })
+                    });
+                    myApplication.reserveSeats(seatId);
+                }).catch(function (error) {
+                    //TODO(jakub): handle exception when reservation cannot be started.
+                });
+            } else {
+                myApplication.reserveSeats(seatId);
             }
-            var valid = true;
-            // Check if the seats that we would like to reserve are not blocked already
-            for (var s = seatId; (s < seatId + myApplication.selectedNumSeats) && valid; s++) {
-                valid = valid && !myApplication.blockedSeatsList.has(s);
-            }
-            if (!valid)
-                return false;
-
-            // Seat block should be continuous in a single row.
-            var row1 = Math.floor(seatId / myApplication.auditorium.cols);
-            var row2 = Math.floor((seatId + myApplication.selectedNumSeats - 1) / myApplication.auditorium.cols);
-            if (row1 != row2)
-                return false;
-
-            var params = {
-                id: myApplication.currentReservationId,
-                start_seat_block: seatId,
-                seat_block_size: myApplication.selectedNumSeats,
-                screening: myApplication.screening_id
-            };
-            // we have reservation block, only update it
-            var action = ["reservation", "update"];
-            myApplication.client.action(schema, action, params).then(function (result) {
-                myApplication.currentReservationSeatBlockId = result.id;
-
-                $("td.seats").removeClass('clicked');  // clear all selected cells.
-                for (var s = seatId; s < seatId + myApplication.selectedNumSeats; s++) {
-                    $("td#seat-" + s).addClass('clicked');
-                }
-            }).catch(function (error) {
-                console.log(error);
-                //TODO(jakub): report or do something, should not happen.
-            });
         }
     },
 
-    blockSeats: function(data) {
-        Object.keys(data).forEach(function(key) {
+    /**
+     * Update grid with seats and marked the one that are blocked.
+     * @param data
+     */
+    blockSeats: function (data) {
+        myApplication.blockedSeatsList.clear();
+        $("td.seats").removeClass("blocked");
+        Object.keys(data).forEach(function (key) {
             var seat_data = data[key];
             for (var s = seat_data.start_seat_block; s < seat_data.start_seat_block + seat_data.seat_block_size; s++) {
-                $("td#seat-" + s).addClass('blocked').unbind("click");
+                if (myApplication.selectedSeatsList.has(s))
+                    continue;
+                $("td#seat-" + s).addClass("blocked").unbind("click");
                 myApplication.blockedSeatsList.add(s);
             }
         });
@@ -105,28 +174,18 @@ var myApplication = {
             myApplication.blockSeats(auditorium_data.blocked_seats);
         }
     },
-    selectScreening: function () {
-        // Create reservation object.
-        var screeing_id = $(this).find('option:selected').attr("data-screening-id");
-        var action = ["reservation", "create"];
-        var params = {screening: screeing_id, confirmed: false};
-        myApplication.client.action(schema, action, params).then(function (result) {
-            myApplication.currentReservationId = result.id;
-            $.get("/get_screening/" + screeing_id, function (data) {
-                myApplication.drawAuditorium(data);
-            });
-            $("select#screening").prop('disabled', true);
-            $("#step2").show();
-        }).catch(function(error){
-            //TODO(jakub): handle exception when reservation cannot be started.
-        });
 
-        return true;
+    initGUI: function () {
+        $("#step2").hide();
+        $("#step3").hide();
+        $("select#screening").prop('disabled', false);
     },
 
     init: function () {
+        myApplication.initGUI();
         myApplication.currentReservationId = null;
         myApplication.blockedSeatsList = new Set();
+        myApplication.selectedSeatsList = new Set();
         myApplication.auditorium = {
             id: null,
             rows: null,
@@ -144,15 +203,30 @@ var myApplication = {
         // Subscribe for the updates.
         var channel = myApplication.pusher.subscribe('appcinema-reservation');
 
-        channel.bind('seats-selected', function (data) {
-            consle.log(data.message);
+        channel.bind('blocked-seats', function (data) {
+            myApplication.blockSeats(data.blocked_seats);
         });
 
         // handle events
-        $("select#screening").click(myApplication.selectScreening);
-        $("select#num_seats").click(myApplication.selectNumSeats);
+        $("select#screening").click(function () {
+            // Create reservation object.
+            var screeing_id = $(this).find('option:selected').attr("data-screening-id");
+            $.get("/get_screening/" + screeing_id, function (data) {
+                myApplication.drawAuditorium(data);
+            });
+            $("select#screening").prop('disabled', true);
+            $("#step2").show();
 
-        // CoreAPI REST requests
+            return true;
+        });
+        $("select#num_seats").click(function () {
+            $("#step3").show();
+            $("#num-seats").text($(this).val());
+            myApplication.selectedNumSeats = parseInt($(this).val());
+            return true;
+        });
+
+        // CoreAPI REST requests.
         var auth = new coreapi.auth.SessionAuthentication({
             csrfCookieName: 'csrftoken',
             csrfHeaderName: 'X-CSRFToken'
