@@ -20,6 +20,7 @@ def index(request):
 def get_screening(request, screening_id):
     """Returns information about screening."""
     screening = models.Screening.objects.select_related('auditorium').select_related('movie').get(pk=screening_id)
+    blocked_seats = models.Reservation.objects.filter(screening=screening_id).values('start_seat_block', 'seat_block_size')
 
     data = {
         'id': screening.id,
@@ -29,8 +30,8 @@ def get_screening(request, screening_id):
         'auditorium_id': screening.auditorium.id,
         'total_num_seats': screening.auditorium.total_num_seats,
         'rows': screening.auditorium.nrows,
+        'blocked_seats': list(blocked_seats)
     }
-
     return JsonResponse(data)
 
 def reserve_seats(request, screening_id):
@@ -50,7 +51,6 @@ class ScreeningViewSet(viewsets.ModelViewSet):
     # queryset = models.Screening.objects.filter(start_screening__gte=datetime.date.today())
     queryset = models.Screening.objects.all()
     serializer_class = serializer.ScreeningSerializer
-
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = models.Reservation.objects.all()

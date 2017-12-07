@@ -8,6 +8,10 @@
     background-color:gray;
 }
 
+.grid td.blocked {
+    background-color:darkred;
+}
+
 .grid td.grid-screen {
     text-align: center;
     color: white;

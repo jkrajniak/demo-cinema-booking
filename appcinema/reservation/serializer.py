@@ -16,14 +16,15 @@ class ReservationSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Validate the seat reserved block."""
         if 'seat_block_size' in data and 'start_seat_block' in data:
-            print(data)
             screening = data['screening']
             seat_block_size = data['seat_block_size']
+            if seat_block_size < 0 or seat_block_size > 5:
+                raise serializers.ValidationError('Wrong size of the seats block')
             start_seat_number = data['start_seat_block']
             # Get the maximum number of seats in the auditorium.
             auditorium = screening.auditorium
             if start_seat_number + seat_block_size > auditorium.total_num_seats:
-                raise serializers.ValidationError('Wrong number of selected seats.')
+                raise serializers.ValidationError('Wrong position of the seats block')
         return data
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
