@@ -21,6 +21,7 @@
 
     <script src="{% static 'rest_framework/js/coreapi-0.1.1.js' %}"></script>
     <script src="{% url 'api-docs:schema-js' %}"></script>
+    <script src="{% static 'js/date.format.js' %}"></script>
 
     <script src="{% static "js/main.js" %}"></script>
 
@@ -72,6 +73,8 @@
     </div>
     {% else %}
     {% block content %}
+    {% endblock %}
+    {% block content2 %}
     {% endblock %}
     {% endif %}
     </div><!-- /.container -->

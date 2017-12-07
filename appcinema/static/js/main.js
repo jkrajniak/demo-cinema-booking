@@ -37,6 +37,13 @@ var myTools = {
     }
 };
 
+var ReservationStatus = {
+    CANCELED: -1,
+    TENTATIVE: 0,
+    CONFIRMED: 1,
+    BOOKED: 2
+};
+
 var myApplication = {
     reserveSeats: function (seatId) {
         var valid = true;
@@ -64,7 +71,7 @@ var myApplication = {
             id: myApplication.currentReservationId,
             start_seat_block: seatId,
             seat_block_size: myApplication.selectedNumSeats,
-            screening: myApplication.screening_id
+            screening: myApplication.screening.id
         };
         // we have reservation block, only update it
         var action = ["reservation", "update"];
@@ -79,27 +86,45 @@ var myApplication = {
         });
     },
 
+    cancelReservation: function (callback, error) {
+        // Cancel reservation when timer finished.
+        var action = ["reservation", "update"];
+        var params = {
+            id: myApplication.currentReservationId,
+            screening: myApplication.screening.id,
+            status: ReservationStatus.CANCELED
+        };
+        myApplication.client.action(schema, action, params).then(callback).catch(error);
+    },
+
+    confirmReservation: function(callback, error) {
+        var action = ["reservation", "update"];
+        var params = {
+            id: myApplication.currentReservationId,
+            screening: myApplication.screening.id,
+            status: ReservationStatus.CONFIRMED
+        };
+        myApplication.client.action(schema, action, params).then(callback).catch(error);
+    },
+
     selectSeats: function () {
         var seatId = parseInt($(this).attr("data-seat-num"));
         if (seatId + myApplication.selectedNumSeats <= myApplication.auditorium.total_num_seats) {
             if (myApplication.currentReservationId == null) {
                 // reservation not made, do it first time and start the clock
                 var action = ["reservation", "create"];
-                var params = {screening: myApplication.screening_id, status: 0};
+                var params = {
+                    screening: myApplication.screening.id,
+                    status: ReservationStatus.TENTATIVE
+                };
                 myApplication.client.action(schema, action, params).then(function (result) {
                     myApplication.currentReservationId = result.id;
-                    myTools.setTimer(2*60, $("span#timer"), function () {
+                    myTools.setTimer(2 * 60, $("span#timer"), function () {
                         // Cancel reservation when timer finished.
-                        var action = ["reservation", "update"];
-                        var params = {
-                            id: myApplication.currentReservationId,
-                            screening: myApplication.screening_id,
-                            status: -1
-                        };
-                        myApplication.client.action(schema, action, params).then(function (result) {
+                        myApplication.cancelReservation(function (result) {
                             alert("Session expired. Reload");
                             myApplication.init();
-                        })
+                        });
                     });
                     myApplication.reserveSeats(seatId);
                 }).catch(function (error) {
@@ -132,8 +157,11 @@ var myApplication = {
     drawAuditorium: function (auditorium_data) {
         if (auditorium_data) {
             myApplication.auditorium.id = auditorium_data.auditorium_id;
-            myApplication.auditorium.total_num_seats = auditorium_data.total_num_seats;
-            myApplication.screening_id = auditorium_data.id;
+            myApplication.auditorium.total_num_seats = parseInt(auditorium_data.total_num_seats);
+            myApplication.auditorium.name = auditorium_data.auditorium_name;
+            myApplication.screening.id = auditorium_data.id;
+            myApplication.screening.title = auditorium_data.title;
+            myApplication.screening.datetime = new Date(auditorium_data.movie_time);
 
             $("#auditorium-name").text(auditorium_data.auditorium_name);
             $("#movie-name").text(auditorium_data.title);
@@ -178,37 +206,12 @@ var myApplication = {
     initGUI: function () {
         $("#step2").hide();
         $("#step3").hide();
-        $("select#screening").prop('disabled', false);
-    },
-
-    init: function () {
-        myApplication.initGUI();
-        myApplication.currentReservationId = null;
-        myApplication.blockedSeatsList = new Set();
-        myApplication.selectedSeatsList = new Set();
-        myApplication.auditorium = {
-            id: null,
-            rows: null,
-            cols: null,
-            total_num_seats: null
-        };
-        myApplication.screening_id = null;
-
-        Pusher.logToConsole = true;
-        myApplication.pusher = new Pusher('c6c88f0bd9523ee60c3e', {
-            cluster: 'eu',
-            encrypted: true
-        });
-
-        // Subscribe for the updates.
-        var channel = myApplication.pusher.subscribe('appcinema-reservation');
-
-        channel.bind('blocked-seats', function (data) {
-            myApplication.blockSeats(data.blocked_seats);
-        });
+        var select_screening = $("select#screening");
+        select_screening.prop('disabled', false);
+        select_screening.val(0);
 
         // handle events
-        $("select#screening").click(function () {
+        select_screening.click(function () {
             // Create reservation object.
             var screeing_id = $(this).find('option:selected').attr("data-screening-id");
             $.get("/get_screening/" + screeing_id, function (data) {
@@ -225,6 +228,67 @@ var myApplication = {
             myApplication.selectedNumSeats = parseInt($(this).val());
             return true;
         });
+
+        // handle reserva and cancel buttons
+        $(".btn#reserve").click(function () {
+            $("#reservationWindow").modal('show');
+            $("#movieName").text(myApplication.screening.title);
+            $("#screeningDateTime").text(myApplication.screening.datetime.format("dddd, mmmm dS, yyyy, h:MM"));
+            $("#auditoriumName").text(myApplication.auditorium.name);
+            var seatsList = new Array();
+            myApplication.selectedSeatsList.forEach(function (s) {
+                var row = Math.floor(s / myApplication.auditorium.cols);
+                var col = s - row * myApplication.auditorium.cols + 1;
+                seatsList.push(col + String.fromCharCode(65 + row))
+            });
+            $("#selectedSeats").text(seatsList.join(", "));
+        });
+
+        $(".btn#cancel").click(function () {
+            myApplication.cancelReservation(function() { myApplication.init(); });
+        });
+        $(".btn#confirmReservation").click(function() {
+            myApplication.confirmReservation(function() {
+                $("#reservationWindow").modal('hide');
+                $("#confirmationWindow").modal('show');
+            });
+        });
+        $("#confirmationWindow").on('hidden.bs.modal', function(evt) {
+           myApplication.init();
+        });
+    },
+
+    init: function () {
+        myApplication.initGUI();
+        myApplication.currentReservationId = null;
+        myApplication.blockedSeatsList = new Set();
+        myApplication.selectedSeatsList = new Set();
+        myApplication.auditorium = {
+            id: null,
+            rows: null,
+            name: null,
+            cols: null,
+            total_num_seats: null
+        };
+        myApplication.screening = {
+            id: null,
+            title: null,
+            datetime: null
+        };
+
+        Pusher.logToConsole = true;
+        myApplication.pusher = new Pusher('c6c88f0bd9523ee60c3e', {
+            cluster: 'eu',
+            encrypted: true
+        });
+
+        // Subscribe for the updates.
+        var channel = myApplication.pusher.subscribe('appcinema-reservation');
+
+        channel.bind('blocked-seats', function (data) {
+            myApplication.blockSeats(data.blocked_seats);
+        });
+
 
         // CoreAPI REST requests.
         var auth = new coreapi.auth.SessionAuthentication({

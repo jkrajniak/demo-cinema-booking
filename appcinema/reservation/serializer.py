@@ -1,3 +1,6 @@
+from django.utils import timezone
+from django.conf import settings
+
 from rest_framework import serializers
 
 from . import models
@@ -26,8 +29,14 @@ class ReservationSerializer(serializers.ModelSerializer):
             if start_seat_number + seat_block_size > auditorium.total_num_seats:
                 raise serializers.ValidationError('Wrong position of the seats block')
 
-        # Validate the session time.
+        # Validate the session time. Cannot save reservation that is outdated.
+        if self.instance is not None:
+            timediff = timezone.now() - self.instance.reservation_start
+            if timediff.seconds > settings.TENTATIVE_BOOKED_SEC:
+                raise serializers.ValidationError('Session expired.')
 
+            if self.instance.status > models.TENTATIVE:
+                raise serializers.ValidationError('Cannot edit confirmed reservation')
 
         return data
 

@@ -7,7 +7,8 @@
             <label for="screening">Select movie</label>
             <select class="form-control" id="screening">
                 {% for s in screening %}
-                <option data-screening-id="{{ s.id }}">{{ s.movie.title }} ({{ s.start_screening|date:"j, l H:i" }})</option>
+                <option data-screening-id="{{ s.id }}">{{ s.movie.title }} ({{ s.start_screening|date:"j, l H:i" }})
+                </option>
                 {% endfor %}
             </select>
         </div>
@@ -44,13 +45,60 @@
         <div>Time left to reserve <span id="timer">2:00</span></div>
     </div>
     <div class="row">
-    <div id="auditorium-grid">
-    </div>
+        <div id="auditorium-grid">
+        </div>
     </div>
 
     <div class="btn-toolbar">
-        <button type="button" class="btn btn-success">Reserve</button>
-        <button type="button" class="btn btn-danger">Cancel</button>
+        <button type="button" class="btn btn-success" id="reserve">Reserve</button>
+        <button type="button" class="btn btn-danger" id="cancel">Cancel</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content2 %}
+<div id="reservationWindow" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Confirm reservation</h5>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm">Movie</div>
+                    <div class="col-sm" id="movieName"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">Date and time</div>
+                    <div class="col-sm" id="screeningDateTime"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">Auditorium</div>
+                    <div class="col-sm" id="auditoriumName"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm">Selected seats</div>
+                    <div class="col-sm" id="selectedSeats"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Continue</button>
+                <button type="button" class="btn btn-success" id="confirmReservation">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmationWindow" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Confirmed</h5>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 

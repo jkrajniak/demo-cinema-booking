@@ -120,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Warsaw'
 
 USE_I18N = True
 
@@ -145,6 +145,8 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 USE_X_FORWARDED_HOST = True
+
+TENTATIVE_BOOKED_SEC = 2*60
 
 # Settings for REST Framework
 # Let allow only authenticated users
