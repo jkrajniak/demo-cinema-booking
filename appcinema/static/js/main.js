@@ -1,7 +1,7 @@
 'use strict';
 
 var myApplication = {
-    selectNumSeatcontinuousn() {
+    selectNumSeats: function() {
         $("#step3").show();
         $("#num-seats").text($(this).val());
         myApplication.selectedNumSeats = parseInt($(this).val());
