@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <form>
+        <div class="form-group">
+            <label for="screening">Screening</label>
+            <select class="form-control" id="screening">
+                {% for s in screening %}
+                <option data-screening-id="{{ s.id }}">{{ s.movie.title }} ({{ s.start_screening|date:"j, l H:i" }})</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<div id="auditorium-row" style="display:none">
+    <div class="row" id="auditorium-name">
+    </div>
+    <div class="row">
+    <div id="auditorium-grid">
+    </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,19 +1,21 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Auditorium(models.Model):
     name = models.CharField(max_length=255)
     nrows = models.IntegerField(verbose_name="Number of rows")
     total_num_seats = models.IntegerField(verbose_name="Total number of seats")
-    
-class Seat(models.Model):
-    row = models.IntegerField()
-    seat_number = models.IntegerField()
-    auditorium = models.ForeignKey(Auditorium)
-    
+
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.total_num_seats)
+
 class Movie(models.Model):
     title = models.CharField(max_length=255)
-    description = models.TextField()
-    movie_length = models.IntegerField()
+    description = models.TextField(blank=True)
+    movie_length = models.IntegerField(help_text='Movie length (minutes)')
+
+    def __str__(self):
+        return '{} ({} min)'.format(self.title, self.movie_length)
 
 class Screening(models.Model):
     movie = models.ForeignKey(Movie)
@@ -21,11 +23,11 @@ class Screening(models.Model):
     start_screening = models.DateTimeField()
     
 class Reservation(models.Model):
-    # user = ...
+    user = models.ForeignKey(User)
     screening = models.ForeignKey(Screening)
     reservation_start = models.DateTimeField(auto_now_add=True)
     confirmed = models.BooleanField()
     
 class SeatReserved(models.Model):
-    seat = models.ForeignKey(Seat)
     reservation = models.ForeignKey(Reservation)
+    seat_number = models.IntegerField()
