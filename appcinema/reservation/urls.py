@@ -5,11 +5,7 @@ from rest_framework import routers
 from . import views
 
 router = routers.DefaultRouter()
-router.register('screenings', views.ScreeningViewSet)
-router.register('movies', views.MovieViewSet)
-router.register('auditoria', views.AuditoriumViewSet)
 router.register('reservation', views.ReservationViewSet)
-router.register('seatreserved', views.SeatReservedViewSet)
 
 urlpatterns = [
     url(r'^$', views.index, name='home'),

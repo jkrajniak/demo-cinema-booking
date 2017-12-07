@@ -52,19 +52,6 @@ class ScreeningViewSet(viewsets.ModelViewSet):
     serializer_class = serializer.ScreeningSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
-    queryset = models.Movie.objects.all()
-    serializer_class = serializer.MovieSerializer
-
-
-class AuditoriumViewSet(viewsets.ModelViewSet):
-    queryset = models.Auditorium.objects.all()
-    serializer_class = serializer.AuditoriumSerializer
-
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = models.Reservation.objects.all()
     serializer_class = serializer.ReservationSerializer
-
-class SeatReservedViewSet(viewsets.ModelViewSet):
-    queryset = models.SeatReserved.objects.all();
-    serializer_class = serializer.SeatReservedSerializer
