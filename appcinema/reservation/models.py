@@ -26,8 +26,12 @@ class Reservation(models.Model):
     user = models.ForeignKey(User)
     screening = models.ForeignKey(Screening)
     reservation_start = models.DateTimeField(auto_now_add=True)
-    confirmed = models.BooleanField()
+    confirmed = models.BooleanField(default=False)
     
 class SeatReserved(models.Model):
     reservation = models.ForeignKey(Reservation)
+    start_seat_number = models.IntegerField(default=0)
     seat_number = models.IntegerField()
+    
+    class Meta:
+        unique_together = (('reservation', 'start_seat_number'),)
