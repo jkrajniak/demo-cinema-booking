@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row">
+<div class="row" id="step1">
     <form>
         <div class="form-group">
-            <label for="screening">Screening</label>
+            <label for="screening">Select movie</label>
             <select class="form-control" id="screening">
                 {% for s in screening %}
                 <option data-screening-id="{{ s.id }}">{{ s.movie.title }} ({{ s.start_screening|date:"j, l H:i" }})</option>
@@ -14,12 +14,41 @@
     </form>
 </div>
 
-<div id="auditorium-row" style="display:none">
-    <div class="row" id="auditorium-name">
+<div class="row" id="step2" style="display:none">
+    <form>
+        <div class="form-group">
+            <label for="num_seats">Number of seats</label>
+            <select class="form-control" id="num_seats">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<div id="step3" style="display:none">
+    <div class="row">
+        Auditorium:<span id="auditorium-name"></span>
+    </div>
+    <div class="row">
+        Movie: <span id="movie-name"></span>
+    </div>
+    <div class="row">
+        Time: <span id="movie-time"></span>
+    </div>
+    <div class="row">
+        Select <span id="num-seats" style="padding-left: 0.5em; padding-right: 0.5em;"></span> seats.
     </div>
     <div class="row">
     <div id="auditorium-grid">
     </div>
+    </div>
+
+    <div class="row">
+        <button type="button" class="btn btn-primary">Buy</button>
     </div>
 </div>
 

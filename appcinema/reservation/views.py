@@ -23,7 +23,9 @@ def get_screening(request, screening_id):
     data = {
         'id': screening.id,
         'title': screening.movie.title,
+        'movie_time': screening.start_screening,
         'auditorium_name': screening.auditorium.name,
+        'auditorium_id': screening.auditorium.id,
         'total_num_seats': screening.auditorium.total_num_seats,
         'rows': screening.auditorium.nrows,
 

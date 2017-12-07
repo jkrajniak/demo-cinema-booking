@@ -1,0 +1,21 @@
+.grid { margin:1em auto; border-collapse:collapse }
+.grid td {
+    cursor:pointer;
+    width:30px; height:30px;
+    border:1px solid #ccc;
+}
+.grid td.clicked {
+    background-color:gray;
+}
+
+.grid td.grid-screen {
+    text-align: center;
+    color: white;
+    background: black;
+    cursor: default;
+}
+
+.grid td.empty {
+    cursor: default;
+    border: none;
+}
