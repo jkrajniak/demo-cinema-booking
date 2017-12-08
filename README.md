@@ -37,6 +37,7 @@ Libraries
 ---------
 
 Core:
+
  - Django 1.11
  - Django REST Framework
  - pusher
@@ -46,5 +47,6 @@ Core:
 Full list of the required packages is in ```requirements.txt``` file.
 
 GUI:
+
  - Twitter Bootstrap
  - JQuery
