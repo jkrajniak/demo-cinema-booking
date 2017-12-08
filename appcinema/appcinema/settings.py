@@ -147,6 +147,7 @@ LOGOUT_REDIRECT_URL = 'home'
 USE_X_FORWARDED_HOST = True
 
 TENTATIVE_BOOKED_SEC = 2*60
+BOOKED_SEC = 3*60
 
 # Settings for REST Framework
 # Let allow only authenticated users

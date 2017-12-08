@@ -2,10 +2,13 @@ import datetime
 import math
 
 from django.db import models
+from django.conf import settings
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from django.contrib.auth.models import User
+
+from . import tasks
 
 
 class Auditorium(models.Model):
@@ -78,3 +81,4 @@ class Reservation(models.Model):
 def pre_save_reservation(sender, instance, *args, **kwargs):
     if instance.status == CONFIRMED:
         instance.reservation_confirmed = datetime.datetime.now()
+        tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)
