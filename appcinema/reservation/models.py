@@ -19,7 +19,7 @@ class Auditorium(models.Model):
 
     @property
     def ncols(self):
-        return math.ceil(self.total_num_seats/self.nrows)
+        return math.ceil(self.total_num_seats / self.nrows)
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.total_num_seats)
@@ -54,7 +54,8 @@ class ActiveReservationsManager(models.Manager):
         """Returns either CONFIRMED, BOOKED reservations or TENTATIVE but not older than 2 min"""
         time_limit = datetime.datetime.now() - datetime.timedelta(seconds=settings.TENTATIVE_BOOKED_SEC)
         return super(ActiveReservationsManager, self).get_queryset().exclude(
-            status=CANCELED).filter((Q(reservation_start__gte=time_limit)&Q(status__gte=TENTATIVE))|Q(status__gte=CONFIRMED))
+            status=CANCELED).filter(
+            (Q(reservation_start__gte=time_limit) & Q(status__gte=TENTATIVE)) | Q(status__gte=CONFIRMED))
 
 
 class Reservation(models.Model):
@@ -68,22 +69,21 @@ class Reservation(models.Model):
 
     objects = models.Manager()
     active_reservations = ActiveReservationsManager()
-    
+
     @property
     def list_of_seats(self):
         """Gets list of seats for reservation in the format: {seat number}{row name}"""
         output_list = []
-        for s in range(self.start_seat_block, self.start_seat_block+self.seat_block_size, 1):
+        for s in range(self.start_seat_block, self.start_seat_block + self.seat_block_size, 1):
             row = int(math.floor(s / self.screening.auditorium.ncols))
             col = int(s - row * self.screening.auditorium.ncols + 1)
             output_list.append('{:d}{:c}'.format(col, 65 + row))
         return output_list
-    
-    
-    
+
+
 @receiver(pre_save, sender=Reservation)
 def pre_save_reservation(sender, instance, *args, **kwargs):
     if instance.status == CONFIRMED:
         instance.reservation_confirmed = datetime.datetime.now()
-        #TODO(jakub): add celery task to change status of reservations from CONFIRMED to BOOKED
-        #tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)
+        # TODO(jakub): add celery task to change statuses of reservations from CONFIRMED to BOOKED
+        # tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)

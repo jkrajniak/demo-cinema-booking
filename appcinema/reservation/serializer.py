@@ -5,15 +5,18 @@ from rest_framework import serializers
 
 from . import models
 
+
 class ScreeningSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Screening
         fields = ('movie', 'auditorium', 'start_screening', 'reserved_seats')
 
+
 class AuditoriumSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Auditorium
         fields = ('name', 'nrows', 'total_num_seats')
+
 
 class ReservationSerializer(serializers.ModelSerializer):
     def validate(self, data):
