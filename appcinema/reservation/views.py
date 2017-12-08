@@ -49,7 +49,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return super(ReservationViewSet, self).perform_create(serializer)
 
     def perform_update(self, serializer):
-        print(serializer.validated_data)
         serializer.save()  # update data
         # Gets the blocked seats. Do we really need to send everytime all blocked seats?
         blocked_seats = models.Reservation.active_reservations.filter(

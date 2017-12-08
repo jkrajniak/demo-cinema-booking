@@ -25,6 +25,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'bwhx32#r&4_r)jzo((me73#tcg_!0o09e6=wn#x2!&kv++l=cf'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -151,9 +154,8 @@ BOOKED_SEC = 3*60
 
 # Settings for REST Framework
 # Let allow only authenticated users
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.IsAuthenticated',
-#     ],
-#     'PAGE_SIZE': 10
-# }
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
