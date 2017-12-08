@@ -31,7 +31,7 @@ SECRET_KEY = 'bwhx32#r&4_r)jzo((me73#tcg_!0o09e6=wn#x2!&kv++l=cf'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['app.my']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
