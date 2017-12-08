@@ -2,6 +2,7 @@ import datetime
 import math
 
 from django.db import models
+from django.db.models import Q
 from django.conf import settings
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -50,8 +51,10 @@ STATUS = (
 
 class ActiveReservationsManager(models.Manager):
     def get_queryset(self):
+        """Returns either CONFIRMED, BOOKED reservations or TENTATIVE but not older than 2 min"""
+        time_limit = datetime.datetime.now() - datetime.timedelta(seconds=settings.TENTATIVE_BOOKED_SEC)
         return super(ActiveReservationsManager, self).get_queryset().exclude(
-            status=CANCELED)
+            status=CANCELED).filter((Q(reservation_start__gte=time_limit)&Q(status__gte=TENTATIVE))|Q(status__gte=CONFIRMED))
 
 
 class Reservation(models.Model):
@@ -68,6 +71,7 @@ class Reservation(models.Model):
     
     @property
     def list_of_seats(self):
+        """Gets list of seats for reservation in the format: {seat number}{row name}"""
         output_list = []
         for s in range(self.start_seat_block, self.start_seat_block+self.seat_block_size, 1):
             row = int(math.floor(s / self.screening.auditorium.ncols))
@@ -81,4 +85,5 @@ class Reservation(models.Model):
 def pre_save_reservation(sender, instance, *args, **kwargs):
     if instance.status == CONFIRMED:
         instance.reservation_confirmed = datetime.datetime.now()
-        # tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)
+        #TODO(jakub): add celery task to change status of reservations from CONFIRMED to BOOKED
+        #tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)

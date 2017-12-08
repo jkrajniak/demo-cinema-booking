@@ -33,7 +33,8 @@ var myTools = {
                 start = Date.now() + 1000;
         };
         timer();
-        interval = setInterval(timer, 1000)
+        interval = setInterval(timer, 1000);
+        return interval;
     }
 };
 
@@ -119,7 +120,7 @@ var myApplication = {
                 };
                 myApplication.client.action(schema, action, params).then(function (result) {
                     myApplication.currentReservationId = result.id;
-                    myTools.setTimer(2 * 60, $("span#timer"), function () {
+                    myApplication.timer = myTools.setTimer(2 * 60, $("span#timer"), function () {
                         // Cancel reservation when timer finished.
                         myApplication.cancelReservation(function (result) {
                             alert("Session expired. Reload");
@@ -208,6 +209,8 @@ var myApplication = {
         $("#step3").hide();
         var select_screening = $("select#screening");
         select_screening.prop('disabled', false);
+        clearInterval(myApplication.timer);
+        $("span#timer").text("2:00");
     },
 
     initGUI: function () {
@@ -248,7 +251,8 @@ var myApplication = {
         });
 
         $(".btn#cancel").click(function () {
-            myApplication.cancelReservation(function() { myApplication.init(); });
+            myApplication.cancelReservation();
+            myApplication.init();
         });
         $(".btn#confirmReservation").click(function() {
             myApplication.confirmReservation(function() {
@@ -262,7 +266,7 @@ var myApplication = {
     },
 
     init: function () {
-        myApplication.resetGUI()
+        myApplication.resetGUI();
 
         myApplication.currentReservationId = null;
         myApplication.blockedSeatsList = new Set();
@@ -290,7 +294,9 @@ var myApplication = {
         var channel = myApplication.pusher.subscribe('appcinema-reservation');
 
         channel.bind('blocked-seats', function (data) {
-            myApplication.blockSeats(data.blocked_seats);
+            if (myApplication.screening.id === data.screening_id) {
+                myApplication.blockSeats(data.blocked_seats);
+            }
         });
 
 

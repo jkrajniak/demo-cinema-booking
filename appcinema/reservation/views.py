@@ -51,6 +51,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save()  # update data
         # Gets the blocked seats. Do we really need to send everytime all blocked seats?
+        screening = serializer.validated_data.get('screening')
         blocked_seats = models.Reservation.active_reservations.filter(
             screening=serializer.validated_data.get('screening')
         ).values('start_seat_block', 'seat_block_size')
@@ -60,4 +61,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
             secret=settings.PUSHER_SECRET,
             cluster='eu',
             ssl=True)
-        pusher_client.trigger('appcinema-reservation', 'blocked-seats', {'blocked_seats': list(blocked_seats)})
+        output_data = {
+            'blocked_seats': list(blocked_seats),
+            'screening_id': screening.id
+        }
+        pusher_client.trigger('appcinema-reservation', 'blocked-seats', output_data)
