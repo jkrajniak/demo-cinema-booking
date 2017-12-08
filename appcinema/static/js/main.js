@@ -203,14 +203,18 @@ var myApplication = {
         }
     },
 
-    initGUI: function () {
+    resetGUI: function() {
         $("#step2").hide();
         $("#step3").hide();
         var select_screening = $("select#screening");
         select_screening.prop('disabled', false);
         select_screening.val(0);
+    },
 
+    initGUI: function () {
+        myApplication.resetGUI();
         // handle events
+        var select_screening = $("select#screening");
         select_screening.click(function () {
             // Create reservation object.
             var screeing_id = $(this).find('option:selected').attr("data-screening-id");
@@ -259,7 +263,8 @@ var myApplication = {
     },
 
     init: function () {
-        myApplication.initGUI();
+        myApplication.resetGUI()
+
         myApplication.currentReservationId = null;
         myApplication.blockedSeatsList = new Set();
         myApplication.selectedSeatsList = new Set();
@@ -301,4 +306,5 @@ var myApplication = {
 
 $(document).ready(function () {
     myApplication.init();
+    myApplication.initGUI();
 });

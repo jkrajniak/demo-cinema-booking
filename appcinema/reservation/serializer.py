@@ -24,16 +24,26 @@ class ReservationSerializer(serializers.ModelSerializer):
             if seat_block_size < 0 or seat_block_size > 5:
                 raise serializers.ValidationError('Wrong size of the seats block')
             start_seat_number = data['start_seat_block']
+            end_seat_number = start_seat_number + seat_block_size
             # Get the maximum number of seats in the auditorium.
             auditorium = screening.auditorium
             if start_seat_number + seat_block_size > auditorium.total_num_seats:
                 raise serializers.ValidationError('Wrong position of the seats block')
 
+            # Check if the block of seats does not overlap with any of the existing blocks
+            blocked_seats = models.Reservation.active_reservations.filter(screening=screening).values_list(
+                'start_seat_block', 'seat_block_size').order_by('start_seat_block')
+            for s, l in blocked_seats:
+                if (start_seat_number > s and start_seat_number < s+l) or \
+                        (end_seat_number > s and end_seat_number < s+l):
+                    raise serializers.ValidationError('Wrong seat block, overlap with existing blocks')
+
+
         # Validate the session time. Cannot save reservation that is outdated.
         if self.instance is not None:
             timediff = timezone.now() - self.instance.reservation_start
             if timediff.seconds > settings.TENTATIVE_BOOKED_SEC:
-                raise serializers.ValidationError('Session expired.')
+                raise serializers.ValidationError('Reservation session expired.')
 
             if self.instance.status > models.TENTATIVE:
                 raise serializers.ValidationError('Cannot edit confirmed reservation')

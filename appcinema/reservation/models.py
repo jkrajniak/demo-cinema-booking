@@ -1,4 +1,9 @@
+import datetime
+
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+
 from django.contrib.auth.models import User
 
 
@@ -52,3 +57,9 @@ class Reservation(models.Model):
 
     objects = models.Manager()
     active_reservations = ActiveReservationsManager()
+    
+    
+@receiver(pre_save, sender=Reservation)
+def pre_save_reservation(sender, instance, *args, **kwargs):
+    if instance.status == CONFIRMED:
+        instance.reservation_confirmed = datetime.datetime.now()
