@@ -13,7 +13,15 @@
     </tr>
     </thead>
     <tbody>
-
+        {% for r in reservations %}
+        <tr>
+            <td>{{ r.screening.start_screening }}</td>
+            <td>{{ r.screening.movie.title }}</td>
+            <td>{{ r.screening.auditorium.name }}</td>
+            <td>{{ r.list_of_seats|join:", " }}</td>
+            <td>{{ r.get_status_display }}</td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 

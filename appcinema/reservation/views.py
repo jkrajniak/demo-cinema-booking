@@ -37,7 +37,7 @@ def get_screening(request, screening_id):
     return JsonResponse(data)
 
 def get_history(request):
-    reservations = models.Reservation.objects.filter(user=request.user)
+    reservations = models.Reservation.objects.filter(user=request.user).order_by('reservation_confirmed')
     return render(request, 'reservation/history.html', {'reservations': reservations})
 
 

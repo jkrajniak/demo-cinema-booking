@@ -1,4 +1,5 @@
 import datetime
+import math
 
 from django.db import models
 from django.db.models.signals import pre_save
@@ -11,6 +12,10 @@ class Auditorium(models.Model):
     name = models.CharField(max_length=255)
     nrows = models.IntegerField(verbose_name="Number of rows")
     total_num_seats = models.IntegerField(verbose_name="Total number of seats")
+
+    @property
+    def ncols(self):
+        return math.ceil(self.total_num_seats/self.nrows)
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.total_num_seats)
@@ -57,6 +62,16 @@ class Reservation(models.Model):
 
     objects = models.Manager()
     active_reservations = ActiveReservationsManager()
+    
+    @property
+    def list_of_seats(self):
+        output_list = []
+        for s in range(self.start_seat_block, self.start_seat_block+self.seat_block_size, 1):
+            row = int(math.floor(s / self.screening.auditorium.ncols))
+            col = int(s - row * self.screening.auditorium.ncols + 1)
+            output_list.append('{:d}{:c}'.format(col, 65 + row))
+        return output_list
+    
     
     
 @receiver(pre_save, sender=Reservation)
