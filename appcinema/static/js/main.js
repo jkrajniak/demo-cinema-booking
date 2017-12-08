@@ -208,7 +208,6 @@ var myApplication = {
         $("#step3").hide();
         var select_screening = $("select#screening");
         select_screening.prop('disabled', false);
-        select_screening.val(0);
     },
 
     initGUI: function () {
@@ -221,7 +220,7 @@ var myApplication = {
             $.get("/get_screening/" + screeing_id, function (data) {
                 myApplication.drawAuditorium(data);
             });
-            $("select#screening").prop('disabled', true);
+            // $("select#screening").prop('disabled', true);
             $("#step2").show();
 
             return true;

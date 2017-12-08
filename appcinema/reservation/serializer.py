@@ -30,15 +30,6 @@ class ReservationSerializer(serializers.ModelSerializer):
             if start_seat_number + seat_block_size > auditorium.total_num_seats:
                 raise serializers.ValidationError('Wrong position of the seats block')
 
-            # Check if the block of seats does not overlap with any of the existing blocks
-            blocked_seats = models.Reservation.active_reservations.filter(screening=screening).values_list(
-                'start_seat_block', 'seat_block_size').order_by('start_seat_block')
-            for s, l in blocked_seats:
-                if (start_seat_number > s and start_seat_number < s+l) or \
-                        (end_seat_number > s and end_seat_number < s+l):
-                    raise serializers.ValidationError('Wrong seat block, overlap with existing blocks')
-
-
         # Validate the session time. Cannot save reservation that is outdated.
         if self.instance is not None:
             timediff = timezone.now() - self.instance.reservation_start

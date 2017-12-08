@@ -81,4 +81,4 @@ class Reservation(models.Model):
 def pre_save_reservation(sender, instance, *args, **kwargs):
     if instance.status == CONFIRMED:
         instance.reservation_confirmed = datetime.datetime.now()
-        tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)
+        # tasks.change_reservation_status.apply_async((instance.id,), countdown=settings.BOOKED_SEC)
