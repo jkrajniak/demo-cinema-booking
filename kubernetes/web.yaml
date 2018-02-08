@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: appcinemaweb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: appcinemaweb
+    spec:
+      containers:
+      - name: appcinemaweb-app
+        imagePullPolicy: Never
+        image: my-image
+        args:
+        - bash
+        - -c
+        - python3 manage.py migrate --noinput && python3 manage.py loaddata fixture.json
+          && gunicorn appcinema.wsgi -b 0.0.0.0:8000
+        ports:
+        - containerPort: 8000
+          name: web-port

@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        appdb: appcinemadb
+    spec:
+      containers:
+      - image: postgres:latest
+        name: ps01
+        resources: {}
+      restartPolicy: Always
+status: {}
