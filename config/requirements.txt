@@ -12,7 +12,7 @@ decorator==4.1.2
 defusedxml==0.5.0
 Django==1.11.6
 django-filter==1.1.0
-djangorestframework==3.7.3
+djangorestframework==3.11.2
 gunicorn==19.7.1
 idna==2.6
 ipython-genutils==0.2.0
