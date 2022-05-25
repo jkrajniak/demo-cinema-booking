@@ -34,7 +34,7 @@ pusher==1.7.2
 pyasn1==0.4.2
 pycparser==2.18
 Pygments==2.2.0
-PyJWT==1.5.3
+PyJWT==2.4.0
 pyOpenSSL==17.5.0
 python3-openid==3.1.0
 pytz==2017.3
